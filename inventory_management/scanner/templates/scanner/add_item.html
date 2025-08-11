@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Item</title>
+</head>
+<body>
+    <h1>Add New Item</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="button" id="scan-upc-button">Scan UPC</button>
+        <button type="submit">Save</button>
+    </form>
+    <script>
+        document.getElementById('scan-upc-button').addEventListener('click', function() {
+            var upc = prompt("Enter UPC code");
+            if (upc) {
+                document.getElementById('id_item_number').value = upc;
+            }
+        });
+    </script>
+</body>
+</html>
