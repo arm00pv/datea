@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Item List</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Item List{% endblock %}
+
+{% block content %}
     <h1>Item List</h1>
     <a href="{% url 'add_item' %}">Add New Item</a>
     <br/><br/>
@@ -29,5 +28,4 @@
             {% endfor %}
         </tbody>
     </table>
-</body>
-</html>
+{% endblock %}

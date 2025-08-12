@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Inventory Management{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'item_list' %}">Home</a> |
+        {% if user.is_authenticated %}
+            <span>Hi {{ user.username }}!</span> |
+            <a href="{% url 'logout' %}">Log Out</a>
+        {% else %}
+            <a href="{% url 'login' %}">Log In</a> |
+            <a href="{% url 'register' %}">Sign Up</a>
+        {% endif %}
+    </nav>
+    <hr>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
