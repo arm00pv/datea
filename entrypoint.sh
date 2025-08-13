@@ -3,6 +3,9 @@
 # Exit on error
 set -e
 
+# Wait for the database to be ready
+python wait_for_db.py
+
 # Apply database migrations
 python inventory_management/manage.py migrate
 
