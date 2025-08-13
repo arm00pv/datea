@@ -4,7 +4,6 @@ services:
     env: python
     pythonVersion: "3.12"
     buildCommand: "./build.sh"
-    startCommand: "./entrypoint.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
