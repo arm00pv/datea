@@ -3,6 +3,7 @@ services:
     name: inventory-management
     env: python
     buildCommand: "./build.sh"
+    startCommand: "gunicorn inventory_management.inventory_management.wsgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
