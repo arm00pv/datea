@@ -2,7 +2,6 @@ services:
   - type: web
     name: inventory-management
     env: python
-    pythonVersion: "3.12"
     buildCommand: "./build.sh"
     envVars:
       - key: DATABASE_URL
