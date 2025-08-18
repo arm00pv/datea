@@ -15,16 +15,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
     <script>
         window.addEventListener('load', function () {
+            const resultElement = document.getElementById('result');
+
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                resultElement.innerHTML = "<strong>Error:</strong> Camera access requires a secure connection (HTTPS).";
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                resultElement.innerHTML = "<strong>Error:</strong> Camera access is not supported by your browser.";
+                return;
+            }
+
             const codeReader = new ZXingBrowser.BrowserMultiFormatReader();
             const scanButton = document.getElementById('scan-upc-button');
-            const videoElement = document.getElementById('video');
-            const resultElement = document.getElementById('result');
             let selectedDeviceId;
 
             codeReader.listVideoInputDevices()
                 .then((videoInputDevices) => {
                     if (videoInputDevices.length > 0) {
                         selectedDeviceId = videoInputDevices[0].deviceId;
+                    } else {
+                        resultElement.textContent = "No camera found on this device.";
                     }
                 })
                 .catch((err) => {
