@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Search by UPC{% endblock %}
+
+{% block content %}
+    <h1>Search by UPC</h1>
+    <p>Click the button to start scanning a UPC code.</p>
+    <button type="button" id="scan-upc-button">Scan UPC</button>
+
+    <div>
+        <video id="video" width="300" height="200" style="border: 1px solid gray"></video>
+    </div>
+    <p id="result"></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            const codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+            const scanButton = document.getElementById('scan-upc-button');
+            const videoElement = document.getElementById('video');
+            const resultElement = document.getElementById('result');
+            let selectedDeviceId;
+
+            codeReader.listVideoInputDevices()
+                .then((videoInputDevices) => {
+                    if (videoInputDevices.length > 0) {
+                        selectedDeviceId = videoInputDevices[0].deviceId;
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                    resultElement.textContent = "Could not list video devices.";
+                });
+
+            scanButton.addEventListener('click', () => {
+                if (!selectedDeviceId) {
+                    resultElement.textContent = "No video device found.";
+                    return;
+                }
+
+                resultElement.textContent = "Starting scanner...";
+
+                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+                    if (result) {
+                        console.log(result);
+                        resultElement.textContent = `Found barcode: ${result.text}`;
+                        codeReader.reset();
+                        // Redirect to the search results page
+                        window.location.href = `/search/${result.text}/`;
+                    }
+                    if (err && !(err instanceof ZXingBrowser.NotFoundException)) {
+                        console.error(err);
+                        resultElement.textContent = `Error: ${err}`;
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

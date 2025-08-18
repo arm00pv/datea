@@ -98,6 +98,17 @@ class ViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Subscriber.objects.count(), 1)
 
+    def test_search_view(self):
+        response = self.client.get(reverse('search'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'scanner/search.html')
+
+    def test_search_results_view(self):
+        response = self.client.get(reverse('search_results', kwargs={'upc': '123456789012'}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Item")
+        self.assertTemplateUsed(response, 'scanner/search_results.html')
+
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class ReminderCommandTest(TestCase):
     def setUp(self):

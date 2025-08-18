@@ -34,6 +34,13 @@ def subscribe(request):
         form = SubscriberForm()
     return render(request, 'scanner/subscribe.html', {'form': form})
 
+def search(request):
+    return render(request, 'scanner/search.html')
+
+def search_results(request, upc):
+    items = Item.objects.filter(item_number=upc)
+    return render(request, 'scanner/search_results.html', {'items': items, 'upc': upc})
+
 def setup_test_data(request):
     Item.objects.all().delete() # Clear existing data
     Item.objects.create(item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3))
