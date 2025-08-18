@@ -23,6 +23,15 @@ class ItemModelTest(TestCase):
     def test_item_str(self):
         self.assertEqual(str(self.item), "Test Item")
 
+    def test_duplicate_item_number_allowed(self):
+        Item.objects.create(
+            item_number="123456789012",
+            name="Test Item 2",
+            quantity=5,
+            expiration_date=datetime.date.today() + datetime.timedelta(days=60)
+        )
+        self.assertEqual(Item.objects.count(), 2)
+
 class SubscriberModelTest(TestCase):
     def setUp(self):
         self.subscriber = Subscriber.objects.create(email='test@example.com')
