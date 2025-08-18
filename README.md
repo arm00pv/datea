@@ -67,7 +67,7 @@ There is a known issue where Render may try to run an incorrect start command ba
 3.  Scroll down to the **"Start Command"** field.
 4.  Replace whatever is in that field with this exact command:
     ```
-    gunicorn inventory_management.inventory_management.wsgi:application
+    gunicorn --chdir inventory_management inventory_management.wsgi:application
     ```
 5.  Scroll to the bottom of the page and click **"Save Changes"**.
 6.  This will trigger a new deployment. You can monitor its progress in the "Events" tab.
