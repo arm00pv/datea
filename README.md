@@ -1,6 +1,41 @@
 # Inventory Management Application
 
-This is a Django-based web application for managing inventory.
+This is a simple, collective inventory management application built with Django. It is designed for a single organization to track items and their expiration dates.
+
+## Features
+
+*   **Item List:** View all items in the inventory.
+*   **Add Item:** Add new items to the inventory.
+*   **Expiring Soon:** View a list of items that are expiring within the next 7 days.
+*   **Subscribe:** Subscribe to receive email reminders for expiring items.
+
+## Local Development
+
+To run the application locally, follow these steps:
+
+1.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Run database migrations:**
+    ```bash
+    python inventory_management/manage.py migrate
+    ```
+3.  **Start the development server:**
+    ```bash
+    python inventory_management/manage.py runserver
+    ```
+    The application will be available at `http://localhost:8000`.
+
+## Email Reminders
+
+The application can send email reminders for items that are about to expire. To send the reminders, run the following management command:
+
+```bash
+python inventory_management/manage.py send_reminders
+```
+
+In a production environment, you should schedule this command to run periodically (e.g., once a day using a cron job).
 
 ## Deployment on Render.com
 

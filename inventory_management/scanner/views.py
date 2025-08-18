@@ -1,30 +1,42 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
-from django.urls import reverse_lazy
-from django.views import generic
+from datetime import date, timedelta
 from .models import Item
-from .forms import ItemForm
+from .forms import ItemForm, SubscriberForm
 
-class SignUpView(generic.CreateView):
-    form_class = UserCreationForm
-    success_url = reverse_lazy('login')
-    template_name = 'registration/register.html'
 
-@login_required
 def item_list(request):
-    items = Item.objects.filter(user=request.user)
+    items = Item.objects.all()
     return render(request, 'scanner/item_list.html', {'items': items})
 
-@login_required
+
 def add_item(request):
     if request.method == 'POST':
         form = ItemForm(request.POST)
         if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user
-            item.save()
+            form.save()
             return redirect('item_list')
     else:
         form = ItemForm()
     return render(request, 'scanner/add_item.html', {'form': form})
+
+def expiring_soon(request):
+    seven_days_from_now = date.today() + timedelta(days=7)
+    expiring_items = Item.objects.filter(expiration_date__lte=seven_days_from_now)
+    return render(request, 'scanner/expiring_soon.html', {'items': expiring_items})
+
+def subscribe(request):
+    if request.method == 'POST':
+        form = SubscriberForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('item_list') # Or a success page
+    else:
+        form = SubscriberForm()
+    return render(request, 'scanner/subscribe.html', {'form': form})
+
+def setup_test_data(request):
+    Item.objects.all().delete() # Clear existing data
+    Item.objects.create(item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3))
+    Item.objects.create(item_number='2', name='Eggs', quantity=12, expiration_date=date.today() + timedelta(days=10))
+    Item.objects.create(item_number='3', name='Bread', quantity=1, expiration_date=date.today() + timedelta(days=1))
+    return redirect('item_list')
