@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Subscribe to Reminders{% endblock %}
+
+{% block content %}
+    <h1>Subscribe to Reminders</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Subscribe</button>
+    </form>
+{% endblock %}

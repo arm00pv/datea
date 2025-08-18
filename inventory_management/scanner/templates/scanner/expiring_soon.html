@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Expiring Soon{% endblock %}
+
+{% block content %}
+    <h1>Items Expiring Soon</h1>
+    <br/>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Item Number</th>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Entry Date</th>
+                <th>Expiration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.item_number }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.entry_date }}</td>
+                <td>{{ item.expiration_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
