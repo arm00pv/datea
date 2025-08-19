@@ -5,6 +5,7 @@ class Item(models.Model):
     quantity = models.IntegerField()
     entry_date = models.DateField(auto_now_add=True)
     expiration_date = models.DateField()
+    is_steel = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

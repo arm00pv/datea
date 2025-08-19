@@ -13,6 +13,7 @@
                 <th>Quantity</th>
                 <th>Entry Date</th>
                 <th>Expiration Date</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -24,6 +25,7 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.entry_date }}</td>
                 <td>{{ item.expiration_date }}</td>
+                <td>{% if item.is_steel %}Steel{% else %}Floor{% endif %}</td>
                 <td><a href="{% url 'view_barcode' item.id %}">View Barcode</a></td>
             </tr>
             {% endfor %}

@@ -32,6 +32,9 @@ class ItemModelTest(TestCase):
         )
         self.assertEqual(Item.objects.count(), 2)
 
+    def test_is_steel_default(self):
+        self.assertFalse(self.item.is_steel)
+
 class SubscriberModelTest(TestCase):
     def setUp(self):
         self.subscriber = Subscriber.objects.create(email='test@example.com')
@@ -48,20 +51,24 @@ class ViewTest(TestCase):
             item_number="123456789012",
             name="Test Item",
             quantity=10,
-            expiration_date=datetime.date.today() + datetime.timedelta(days=30)
+            expiration_date=datetime.date.today() + datetime.timedelta(days=30),
+            is_steel=False
         )
-        self.expiring_item = Item.objects.create(
-            item_number="expiring",
-            name="Expiring Item",
+        self.steel_item = Item.objects.create(
+            item_number="steel_item",
+            name="Steel Item",
             quantity=1,
-            expiration_date=datetime.date.today() + datetime.timedelta(days=3)
+            expiration_date=datetime.date.today() + datetime.timedelta(days=3),
+            is_steel=True
         )
 
     def test_item_list_view(self):
         response = self.client.get(reverse('item_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Test Item")
-        self.assertContains(response, "Expiring Item")
+        self.assertContains(response, "Steel Item")
+        self.assertContains(response, "Floor")
+        self.assertContains(response, "Steel")
         self.assertTemplateUsed(response, 'scanner/item_list.html')
 
     def test_add_item_view_get(self):
@@ -74,17 +81,20 @@ class ViewTest(TestCase):
             'item_number': '987654321098',
             'name': 'New Test Item',
             'quantity': 5,
-            'expiration_date': datetime.date.today() + datetime.timedelta(days=60)
+            'expiration_date': datetime.date.today() + datetime.timedelta(days=60),
+            'is_steel': True
         }
         response = self.client.post(reverse('add_item'), data)
-        self.assertEqual(response.status_code, 302) # Should redirect to item_list
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Item.objects.count(), 3)
+        new_item = Item.objects.get(item_number='987654321098')
+        self.assertTrue(new_item.is_steel)
 
     def test_expiring_soon_view(self):
         response = self.client.get(reverse('expiring_soon'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Test Item")
-        self.assertContains(response, "Expiring Item")
+        self.assertContains(response, "Steel Item")
         self.assertTemplateUsed(response, 'scanner/expiring_soon.html')
 
     def test_subscribe_view_get(self):
