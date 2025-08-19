@@ -5,4 +5,5 @@ set -o errexit
 pip install -r requirements.txt
 
 python inventory_management/manage.py collectstatic --no-input
+python wait_for_db.py
 python inventory_management/manage.py migrate
