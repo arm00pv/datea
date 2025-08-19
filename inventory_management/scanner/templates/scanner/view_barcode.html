@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Barcode for {{ item.name }}{% endblock %}
+
+{% block content %}
+    <h1>Barcode for: {{ item.name }}</h1>
+    <p>UPC: {{ item.item_number }}</p>
+
+    <svg id="barcode"></svg>
+
+    <br>
+    <a href="{% url 'item_list' %}">Back to Item List</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/zxing-wasm@0.2.0/dist/iife/writer/index.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            const upc = "{{ item.item_number }}";
+            const svgElement = document.getElementById('barcode');
+
+            if (upc) {
+                ZXingWASM.writeBarcode(svgElement, upc, 'UPC_A', 300, 100);
+            }
+        });
+    </script>
+{% endblock %}

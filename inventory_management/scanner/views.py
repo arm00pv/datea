@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from datetime import date, timedelta
 from .models import Item
 from .forms import ItemForm, SubscriberForm
@@ -40,6 +40,10 @@ def search(request):
 def search_results(request, upc):
     items = Item.objects.filter(item_number=upc)
     return render(request, 'scanner/search_results.html', {'items': items, 'upc': upc})
+
+def view_barcode(request, item_id):
+    item = get_object_or_404(Item, pk=item_id)
+    return render(request, 'scanner/view_barcode.html', {'item': item})
 
 def setup_test_data(request):
     Item.objects.all().delete() # Clear existing data

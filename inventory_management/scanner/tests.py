@@ -109,6 +109,12 @@ class ViewTest(TestCase):
         self.assertContains(response, "Test Item")
         self.assertTemplateUsed(response, 'scanner/search_results.html')
 
+    def test_view_barcode_view(self):
+        response = self.client.get(reverse('view_barcode', kwargs={'item_id': self.item.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Barcode for: Test Item")
+        self.assertTemplateUsed(response, 'scanner/view_barcode.html')
+
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class ReminderCommandTest(TestCase):
     def setUp(self):

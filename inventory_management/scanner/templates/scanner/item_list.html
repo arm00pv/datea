@@ -14,6 +14,7 @@
                 <th>Quantity</th>
                 <th>Entry Date</th>
                 <th>Expiration Date</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -24,6 +25,7 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.entry_date }}</td>
                 <td>{{ item.expiration_date }}</td>
+                <td><a href="{% url 'view_barcode' item.id %}">View Barcode</a></td>
             </tr>
             {% endfor %}
         </tbody>
