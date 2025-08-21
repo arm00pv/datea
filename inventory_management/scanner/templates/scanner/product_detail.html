@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ product.name }}</h1>
+        <div>
+            <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Edit</a>
+            <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+    <p><strong>UPC:</strong> {{ product.item_number }}</p>
+    <p><strong>Total On Hand:</strong> {{ product.total_on_hand }}</p>
+    <p><strong>Weekly Average Sales:</strong> {{ product.weekly_average_sales }}</p>
+
+    <hr>
+
+    <h2>Batches</h2>
+    <a href="{% url 'add_batch' product.id %}" class="btn btn-primary mb-3">Add New Batch</a>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Quantity</th>
+                <th>Expiration Date</th>
+                <th>Status</th>
+                <th>Entry Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for batch in product.batches.all %}
+            <tr>
+                <td>{{ batch.quantity }}</td>
+                <td>{{ batch.expiration_date }}</td>
+                <td>{% if batch.is_steel %}Steel{% else %}Floor{% endif %}</td>
+                <td>{{ batch.entry_date }}</td>
+                <td>
+                    <a href="{% url 'edit_batch' batch.id %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_batch' batch.id %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No batches found for this product.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'product_list' %}" class="btn btn-secondary mt-3">Back to Product List</a>
+{% endblock %}

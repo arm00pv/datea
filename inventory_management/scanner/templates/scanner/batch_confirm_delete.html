@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Batch{% endblock %}
+
+{% block content %}
+    <h1>Delete Batch</h1>
+    <p>Are you sure you want to delete this batch?</p>
+    <p>Product: {{ batch.product.name }}</p>
+    <p>Quantity: {{ batch.quantity }}</p>
+    <p>Expiration Date: {{ batch.expiration_date }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a href="{% url 'product_detail' batch.product.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+{% endblock %}

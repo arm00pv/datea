@@ -1,16 +1,26 @@
 from django import forms
-from .models import Item, Subscriber
+from .models import Product, Batch, Subscriber
 
-class ItemForm(forms.ModelForm):
+class ProductForm(forms.ModelForm):
     class Meta:
-        model = Item
-        fields = ['item_number', 'name', 'quantity', 'expiration_date', 'is_steel']
+        model = Product
+        fields = ['item_number', 'name', 'total_on_hand', 'weekly_average_sales']
+        widgets = {
+            'item_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_on_hand': forms.NumberInput(attrs={'class': 'form-control'}),
+            'weekly_average_sales': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class BatchForm(forms.ModelForm):
+    class Meta:
+        model = Batch
+        fields = ['product', 'quantity', 'expiration_date', 'is_steel']
         labels = {
             'is_steel': 'Steel',
         }
         widgets = {
-            'item_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'product': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'expiration_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'is_steel': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

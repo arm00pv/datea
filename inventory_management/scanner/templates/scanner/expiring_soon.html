@@ -3,26 +3,26 @@
 {% block title %}Expiring Soon{% endblock %}
 
 {% block content %}
-    <h1>Items Expiring Soon</h1>
+    <h1>Batches Expiring Soon</h1>
     <br/>
     <table class="table table-striped table-hover">
         <thead>
             <tr>
-                <th>Item Number</th>
-                <th>Name</th>
+                <th>Product</th>
+                <th>UPC</th>
                 <th>Quantity</th>
-                <th>Entry Date</th>
+                <th>Status</th>
                 <th>Expiration Date</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
+            {% for batch in batches %}
             <tr>
-                <td>{{ item.item_number }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.entry_date }}</td>
-                <td>{{ item.expiration_date }}</td>
+                <td>{{ batch.product.name }}</td>
+                <td>{{ batch.product.item_number }}</td>
+                <td>{{ batch.quantity }}</td>
+                <td>{% if batch.is_steel %}Steel{% else %}Floor{% endif %}</td>
+                <td>{{ batch.expiration_date }}</td>
             </tr>
             {% endfor %}
         </tbody>
