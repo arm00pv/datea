@@ -6,5 +6,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('scanner/', include('scanner.urls')),
     # Add this line to redirect the root URL to the scanner app
-    path('', RedirectView.as_view(url='/templates/', permanent=True)),
+    path('', RedirectView.as_view(url='/scanner/', permanent=True)),
 ]
