@@ -1,10 +1,48 @@
-# Byte-compiled / optimized / DLL files
+# Django
+*.log
+*.pot
+*.pyc
 __pycache__/
+db.sqlite3
+media
+
+# Backup files
+*.bak
+
+# If you are using PyCharm
+.idea/
+
+# AWS User-specific
+.idea/**/aws.xml
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# Gradle
+.idea/**/gradle.xml
+.idea/**/libraries
+
+# File-based project format
+*.iws
+
+# IntelliJ out/
+out/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Python
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python
@@ -20,14 +58,10 @@ parts/
 sdist/
 var/
 wheels/
+*.whl
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -105,3 +139,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom
+add_test_data.py
+server.log

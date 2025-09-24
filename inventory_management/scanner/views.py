@@ -9,7 +9,29 @@ def product_list(request):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
-    return render(request, 'scanner/product_detail.html', {'product': product})
+    today = date.today()
+    batches_with_predictions = []
+
+    for batch in product.batches.all():
+        days_to_expiration = (batch.expiration_date - today).days
+        if days_to_expiration > 0:
+            predicted_sales = (product.weekly_average_sales / 7) * days_to_expiration
+            is_at_risk = batch.quantity > predicted_sales
+        else:
+            predicted_sales = 0
+            is_at_risk = batch.quantity > 0
+
+        batches_with_predictions.append({
+            'batch': batch,
+            'days_to_expiration': days_to_expiration,
+            'predicted_sales': predicted_sales,
+            'is_at_risk': is_at_risk,
+        })
+
+    return render(request, 'scanner/product_detail.html', {
+        'product': product,
+        'batches_with_predictions': batches_with_predictions,
+    })
 
 def add_product(request):
     if request.method == 'POST':
@@ -87,13 +109,41 @@ def subscribe(request):
         form = SubscriberForm()
     return render(request, 'scanner/subscribe.html', {'form': form})
 
-def search(request):
-    return render(request, 'scanner/search.html')
+from django.db.models import Q
 
-def search_results(request, upc):
-    products = Product.objects.filter(item_number=upc)
-    return render(request, 'scanner/search_results.html', {'products': products, 'upc': upc})
+def search(request):
+    query = request.GET.get('q')
+    if query:
+        products = Product.objects.filter(
+            Q(item_number__icontains=query) | Q(name__icontains=query)
+        )
+    else:
+        products = Product.objects.none()
+    return render(request, 'scanner/search_results.html', {'products': products, 'query': query})
 
 def view_barcode(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     return render(request, 'scanner/view_barcode.html', {'product': product})
+
+def expiration_prediction(request):
+    batches = Batch.objects.select_related('product').all()
+    today = date.today()
+    predictions = []
+
+    for batch in batches:
+        days_to_expiration = (batch.expiration_date - today).days
+        if days_to_expiration > 0:
+            predicted_sales = (batch.product.weekly_average_sales / 7) * days_to_expiration
+            is_at_risk = batch.quantity > predicted_sales
+        else:
+            predicted_sales = 0
+            is_at_risk = batch.quantity > 0
+
+        predictions.append({
+            'batch': batch,
+            'days_to_expiration': days_to_expiration,
+            'predicted_sales': predicted_sales,
+            'is_at_risk': is_at_risk,
+        })
+
+    return render(request, 'scanner/expiration_prediction.html', {'predictions': predictions})
