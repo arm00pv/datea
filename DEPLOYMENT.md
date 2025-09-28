@@ -1,6 +1,6 @@
-# Deployment Instructions for Digital Ocean
+# Deployment Instructions for Digital Ocean with Apache2
 
-This guide provides instructions for deploying the inventory management application on a Digital Ocean server running Ubuntu. It assumes you have a working server with root access.
+This guide provides instructions for deploying the inventory management application on a Digital Ocean server running Ubuntu with Apache2. It assumes you have a working server with root access.
 
 ## 1. Server Setup
 
@@ -8,11 +8,11 @@ First, connect to your server via SSH.
 
 ### 1.1. Install System Dependencies
 
-Update your package list and install Python, pip, Nginx, and a virtual environment manager:
+Update your package list and install Python, pip, Apache2, and a virtual environment manager:
 
 ```bash
 sudo apt update
-sudo apt install python3-pip python3-dev nginx virtualenv
+sudo apt install python3-pip python3-dev apache2 virtualenv
 ```
 
 ### 1.2. Create a Project Directory
@@ -61,7 +61,7 @@ python inventory_management/manage.py migrate
 
 ### 2.2. Collect Static Files
 
-Collect all static files into a single directory.
+Collect all static files into a single directory. This is important for Apache to serve them.
 
 ```bash
 python inventory_management/manage.py collectstatic
@@ -85,7 +85,7 @@ Test that Gunicorn can serve your application.
 gunicorn --bind 0.0.0.0:8000 inventory_management.wsgi:application
 ```
 
-You should be able to access your application at `http://<your-server-ip>:8000`.
+You should be able to access your application at `http://<your-server-ip>:8000`. Stop the server with `Ctrl+C`.
 
 ### 3.2. Create a Gunicorn Systemd Service
 
@@ -95,7 +95,7 @@ Create a systemd service file to manage the Gunicorn process.
 sudo nano /etc/systemd/system/gunicorn.service
 ```
 
-Paste the following content into the file. Make sure to replace `<your-user>` with your username.
+Paste the following content into the file. Make sure to replace `<your-user>` with your username. Note that we are binding to a local TCP port, which is easier for Apache to proxy to.
 
 ```ini
 [Unit]
@@ -109,7 +109,7 @@ WorkingDirectory=/var/www/webhost/datea/inventory_management
 ExecStart=/var/www/webhost/datea/venv/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
-          --bind unix:/var/www/webhost/datea/inventory_management.sock \
+          --bind 127.0.0.1:8000 \
           inventory_management.wsgi:application
 
 [Install]
@@ -123,74 +123,87 @@ sudo systemctl start gunicorn
 sudo systemctl enable gunicorn
 ```
 
-## 4. Nginx Setup
+## 4. Apache2 Setup
 
-### 4.1. Create an Nginx Server Block
+### 4.1. Enable Apache Modules
 
-Create a new Nginx server block configuration file.
-
-```bash
-sudo nano /etc/nginx/sites-available/datea
-```
-
-Paste the following content into the file.
-
-```nginx
-server {
-    listen 80;
-    server_name zapp.sytes.net;
-
-    location /datea/static/ {
-        alias /var/www/webhost/datea/staticfiles/;
-    }
-
-    location /datea/ {
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://unix:/var/www/webhost/datea/inventory_management.sock;
-    }
-}
-```
-
-### 4.2. Enable the Server Block
-
-Create a symbolic link to the `sites-enabled` directory.
+Enable the necessary proxy modules for Apache.
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/datea /etc/nginx/sites-enabled
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+sudo systemctl restart apache2
 ```
 
-### 4.3. Test and Restart Nginx
+### 4.2. Create an Apache2 VirtualHost
 
-Test your Nginx configuration for syntax errors and restart the service.
+Create a new Apache2 configuration file for your site.
 
 ```bash
-sudo nginx -t
-sudo systemctl restart nginx
+sudo nano /etc/apache2/sites-available/datea.conf
+```
+
+Paste the following content into the file. This configuration tells Apache how to handle requests for your domain and subdirectory.
+
+```apache
+<VirtualHost *:80>
+    ServerName zapp.sytes.net
+
+    # Alias for static files
+    Alias /datea/static/ /var/www/webhost/datea/staticfiles/
+
+    # Grant access to the static files directory
+    <Directory /var/www/webhost/datea/staticfiles>
+        Require all granted
+    </Directory>
+
+    # Proxy requests for the app to Gunicorn
+    ProxyPreserveHost On
+    ProxyPass /datea/ http://127.0.0.1:8000/
+    ProxyPassReverse /datea/ http://127.0.0.1:8000/
+
+    ErrorLog ${APACHE_LOG_DIR}/datea-error.log
+    CustomLog ${APACHE_LOG_DIR}/datea-access.log combined
+</VirtualHost>
+```
+
+### 4.3. Enable the Site
+
+Enable your new site configuration.
+
+```bash
+sudo a2ensite datea.conf
+```
+
+### 4.4. Test and Restart Apache2
+
+Test your Apache configuration for syntax errors and restart the service.
+
+```bash
+sudo apache2ctl configtest
+sudo systemctl restart apache2
 ```
 
 ## 5. Final Steps
 
 ### 5.1. Configure Django for Subdirectory
 
-Because the application is served from the `/datea/` subdirectory, you may need to adjust your Django settings to ensure that URL reversing works correctly.
+Because the application is served from the `/datea/` subdirectory, you need to adjust your Django settings to ensure that URL reversing works correctly.
 
-In your `inventory_management/settings.py`, you can set the `FORCE_SCRIPT_NAME` setting:
+In your `inventory_management/settings.py`, set the `FORCE_SCRIPT_NAME` setting:
 
 ```python
 FORCE_SCRIPT_NAME = '/datea'
 ```
 
-This will ensure that all URLs generated by Django are prefixed with `/datea`.
+This will ensure that all URLs generated by Django are prefixed with `/datea`. Remember to restart the Gunicorn service after changing the settings file: `sudo systemctl restart gunicorn`.
 
 ### 5.2. Firewall
 
 If you have a firewall enabled (e.g., `ufw`), make sure to allow traffic on port 80.
 
 ```bash
-sudo ufw allow 'Nginx Full'
+sudo ufw allow 'Apache Full'
 ```
 
 Your application should now be accessible at `http://zapp.sytes.net/datea/`.
