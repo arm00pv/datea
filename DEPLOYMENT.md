@@ -1,6 +1,6 @@
 # Deployment Instructions for Digital Ocean with Apache2
 
-This guide provides instructions for deploying the inventory management application on a Digital Ocean server running Ubuntu with Apache2. It assumes you have a working server with root access.
+This guide provides instructions for deploying the inventory management application on a Digital Ocean server running Ubuntu with an existing Apache2 setup.
 
 ## 1. Server Setup
 
@@ -8,42 +8,34 @@ First, connect to your server via SSH.
 
 ### 1.1. Install System Dependencies
 
-Update your package list and install Python, pip, Apache2, and a virtual environment manager:
+You likely have most of these installed. Ensure that `virtualenv` and the MySQL client libraries are installed.
 
 ```bash
 sudo apt update
-sudo apt install python3-pip python3-dev apache2 virtualenv
+sudo apt install python3-pip python3-dev virtualenv default-libmysqlclient-dev build-essential
 ```
 
-### 1.2. Create a Project Directory
+### 1.2. Project Directory
 
-Create a directory for your project. The user specified `/var/www/webhost/datea/`.
+Your project should be cloned into `/var/www/webhost/datea/`.
 
 ```bash
-sudo mkdir -p /var/www/webhost/datea/
+# Ensure you are in the correct directory
 cd /var/www/webhost/datea/
 ```
 
-### 1.3. Clone the Repository
+### 1.3. Create and Activate Virtual Environment
 
-Clone your repository into this directory.
-
-```bash
-git clone <your-repository-url> .
-```
-
-### 1.4. Create a Virtual Environment
-
-Create a virtual environment for your project and activate it.
+If you haven't already, create a virtual environment and activate it.
 
 ```bash
 virtualenv venv
 source venv/bin/activate
 ```
 
-### 1.5. Install Python Dependencies
+### 1.4. Install Python Dependencies
 
-Install the required Python packages from `requirements.txt`.
+Install the required Python packages, which now includes the MySQL driver.
 
 ```bash
 pip install -r requirements.txt
@@ -51,23 +43,39 @@ pip install -r requirements.txt
 
 ## 2. Django Configuration
 
-### 2.1. Run Migrations
+### 2.1. Set Environment Variables for Database
 
-Apply the database migrations to create the database schema.
+For the application to connect to your MySQL database, it needs a `DATABASE_URL`. You should set this as an environment variable for security.
+
+You will need to create a `.env` file in the project's root directory (`/var/www/webhost/datea/`) to store your database credentials.
+
+```bash
+sudo nano /var/www/webhost/datea/.env
+```
+
+Add the following line to the file, replacing `YOUR_DB_USER`, `YOUR_DB_PASSWORD`, and `YOUR_DB_NAME` with your actual MySQL credentials. The IP address is the one you provided.
+
+```
+DATABASE_URL='mysql://YOUR_DB_USER:YOUR_DB_PASSWORD@64.225.55.254:3306/YOUR_DB_NAME'
+```
+
+### 2.2. Run Migrations
+
+Apply the database migrations to create the database schema in your MySQL database.
 
 ```bash
 python inventory_management/manage.py migrate
 ```
 
-### 2.2. Collect Static Files
+### 2.3. Collect Static Files
 
-Collect all static files into a single directory. This is important for Apache to serve them.
+Collect all static files into a single directory for Apache to serve.
 
 ```bash
 python inventory_management/manage.py collectstatic
 ```
 
-### 2.3. Create a Superuser
+### 2.4. Create a Superuser
 
 Create a superuser to access the Django admin interface.
 
@@ -77,35 +85,26 @@ python inventory_management/manage.py createsuperuser
 
 ## 3. Gunicorn Setup
 
-### 3.1. Test Gunicorn
+### 3.1. Update Gunicorn Systemd Service
 
-Test that Gunicorn can serve your application.
-
-```bash
-gunicorn --bind 0.0.0.0:8000 inventory_management.wsgi:application
-```
-
-You should be able to access your application at `http://<your-server-ip>:8000`. Stop the server with `Ctrl+C`.
-
-### 3.2. Create a Gunicorn Systemd Service
-
-Create a systemd service file to manage the Gunicorn process.
+You need to create or update the systemd service file for Gunicorn to manage the process and load the environment variables from your `.env` file.
 
 ```bash
-sudo nano /etc/systemd/system/gunicorn.service
+sudo nano /etc/systemd/system/gunicorn-datea.service
 ```
 
-Paste the following content into the file. Make sure to replace `<your-user>` with your username. Note that we are binding to a local TCP port, which is easier for Apache to proxy to.
+Paste the following content into the file. Make sure to replace `<your-user>` with your username.
 
 ```ini
 [Unit]
-Description=gunicorn daemon
+Description=gunicorn daemon for datea app
 After=network.target
 
 [Service]
 User=<your-user>
 Group=www-data
-WorkingDirectory=/var/www/webhost/datea/inventory_management
+WorkingDirectory=/var/www/webhost/datea
+EnvironmentFile=/var/www/webhost/datea/.env
 ExecStart=/var/www/webhost/datea/venv/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
@@ -119,63 +118,57 @@ WantedBy=multi-user.target
 Start and enable the Gunicorn service.
 
 ```bash
-sudo systemctl start gunicorn
-sudo systemctl enable gunicorn
+sudo systemctl start gunicorn-datea
+sudo systemctl enable gunicorn-datea
 ```
 
 ## 4. Apache2 Setup
 
-### 4.1. Enable Apache Modules
+### 4.1. Update Apache2 Configuration
 
-Enable the necessary proxy modules for Apache.
-
-```bash
-sudo a2enmod proxy
-sudo a2enmod proxy_http
-sudo systemctl restart apache2
-```
-
-### 4.2. Create an Apache2 VirtualHost
-
-Create a new Apache2 configuration file for your site.
+You need to add a configuration block for the `datea` app to your existing `webhost-le-ssl.conf` file.
 
 ```bash
-sudo nano /etc/apache2/sites-available/datea.conf
+sudo nano /etc/apache2/sites-enabled/webhost-le-ssl.conf
 ```
 
-Paste the following content into the file. This configuration tells Apache how to handle requests for your domain and subdirectory.
+Add the following lines inside the `<VirtualHost *:443>` block, alongside your other app configurations:
 
 ```apache
-<VirtualHost *:80>
-    ServerName zapp.sytes.net
-
-    # Alias for static files
+    # --- Configuration for Datea App ---
     Alias /datea/static/ /var/www/webhost/datea/staticfiles/
-
-    # Grant access to the static files directory
     <Directory /var/www/webhost/datea/staticfiles>
         Require all granted
     </Directory>
 
-    # Proxy requests for the app to Gunicorn
-    ProxyPreserveHost On
+    ProxyPass /datea/ http://127.0.0.1:8000/
+    ProxyPassReverse /datea/ http://127.0.0.1:8000/
+```
+
+The final file should look something like this (some sections omitted for brevity):
+```apache
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerName zapp.sytes.net
+    DocumentRoot /var/www/webhost
+
+    # ... your other app configs ...
+
+    # --- Configuration for Datea App ---
+    Alias /datea/static/ /var/www/webhost/datea/staticfiles/
+    <Directory /var/www/webhost/datea/staticfiles>
+        Require all granted
+    </Directory>
+
     ProxyPass /datea/ http://127.0.0.1:8000/
     ProxyPassReverse /datea/ http://127.0.0.1:8000/
 
-    ErrorLog ${APACHE_LOG_DIR}/datea-error.log
-    CustomLog ${APACHE_LOG_DIR}/datea-access.log combined
+    # ... rest of your config ...
 </VirtualHost>
+</IfModule>
 ```
 
-### 4.3. Enable the Site
-
-Enable your new site configuration.
-
-```bash
-sudo a2ensite datea.conf
-```
-
-### 4.4. Test and Restart Apache2
+### 4.2. Test and Restart Apache2
 
 Test your Apache configuration for syntax errors and restart the service.
 
@@ -184,26 +177,19 @@ sudo apache2ctl configtest
 sudo systemctl restart apache2
 ```
 
-## 5. Final Steps
+## 5. Final Django Setting for Subdirectory
 
-### 5.1. Configure Django for Subdirectory
+Because the application is served from the `/datea/` subdirectory, you need to adjust your Django settings.
 
-Because the application is served from the `/datea/` subdirectory, you need to adjust your Django settings to ensure that URL reversing works correctly.
-
-In your `inventory_management/settings.py`, set the `FORCE_SCRIPT_NAME` setting:
+In `inventory_management/settings.py`, add this line:
 
 ```python
 FORCE_SCRIPT_NAME = '/datea'
 ```
 
-This will ensure that all URLs generated by Django are prefixed with `/datea`. Remember to restart the Gunicorn service after changing the settings file: `sudo systemctl restart gunicorn`.
-
-### 5.2. Firewall
-
-If you have a firewall enabled (e.g., `ufw`), make sure to allow traffic on port 80.
-
+After adding this, restart the Gunicorn service for the change to take effect:
 ```bash
-sudo ufw allow 'Apache Full'
+sudo systemctl restart gunicorn-datea
 ```
 
-Your application should now be accessible at `http://zapp.sytes.net/datea/`.
+Your application should now be accessible at `https://zapp.sytes.net/datea/`.
