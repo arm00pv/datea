@@ -12,7 +12,7 @@ You likely have most of these installed. Ensure that `virtualenv` and the MySQL 
 
 ```bash
 sudo apt update
-sudo apt install python3-pip python3-dev virtualenv default-libmysqlclient-dev build-essential
+sudo apt install python3-pip python3-dev virtualenv default-libmysqlclient-dev build-essential pkg-config
 ```
 
 ### 1.2. Project Directory
