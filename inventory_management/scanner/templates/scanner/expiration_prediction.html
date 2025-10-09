@@ -18,14 +18,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for p in predictions %}
-            <tr class="{% if p.is_at_risk %}table-danger{% endif %}">
-                <td><a href="{% url 'product_detail' p.batch.product.id %}">{{ p.batch.product.name }}</a></td>
-                <td>{{ p.batch.quantity }}</td>
-                <td>{{ p.batch.expiration_date }}</td>
-                <td>{{ p.days_to_expiration }}</td>
-                <td>{{ p.predicted_sales|floatformat:2 }}</td>
-                <td>{% if p.is_at_risk %}Yes{% else %}No{% endif %}</td>
+            {% for batch in batches %}
+            <tr class="{% if batch.is_at_risk %}table-danger{% endif %}">
+                <td><a href="{% url 'product_detail' batch.product.id %}">{{ batch.product.name }}</a></td>
+                <td>{{ batch.quantity }}</td>
+                <td>{{ batch.expiration_date }}</td>
+                <td>{{ batch.days_to_expiration }}</td>
+                <td>{{ batch.predicted_sales_until_expiration|floatformat:2 }}</td>
+                <td>{% if batch.is_at_risk %}Yes{% else %}No{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>

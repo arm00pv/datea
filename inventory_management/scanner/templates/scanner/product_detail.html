@@ -31,17 +31,17 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in batches_with_predictions %}
-            <tr class="{% if item.is_at_risk %}table-danger{% endif %}">
-                <td>{{ item.batch.quantity }}</td>
-                <td>{{ item.batch.expiration_date }}</td>
-                <td>{% if item.batch.is_steel %}Steel{% else %}Floor{% endif %}</td>
-                <td>{{ item.days_to_expiration }}</td>
-                <td>{{ item.predicted_sales|floatformat:2 }}</td>
-                <td>{% if item.is_at_risk %}Yes{% else %}No{% endif %}</td>
+            {% for batch in batches %}
+            <tr class="{% if batch.is_at_risk %}table-danger{% endif %}">
+                <td>{{ batch.quantity }}</td>
+                <td>{{ batch.expiration_date }}</td>
+                <td>{% if batch.is_steel %}Steel{% else %}Floor{% endif %}</td>
+                <td>{{ batch.days_to_expiration }}</td>
+                <td>{{ batch.predicted_sales_until_expiration|floatformat:2 }}</td>
+                <td>{% if batch.is_at_risk %}Yes{% else %}No{% endif %}</td>
                 <td>
-                    <a href="{% url 'edit_batch' item.batch.id %}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{% url 'delete_batch' item.batch.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    <a href="{% url 'edit_batch' batch.id %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_batch' batch.id %}" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
             {% empty %}

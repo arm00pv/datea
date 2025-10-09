@@ -146,3 +146,11 @@ REMINDER_RECIPIENT_EMAIL = 'organization@example.com'
 
 # Subdirectory configuration
 FORCE_SCRIPT_NAME = '/datea'
+
+# Caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}

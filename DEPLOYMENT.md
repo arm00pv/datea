@@ -103,7 +103,7 @@ After=network.target
 [Service]
 User=<your-user>
 Group=www-data
-WorkingDirectory=/var/www/webhost/datea
+WorkingDirectory=/var/www/webhost/datea/inventory_management
 EnvironmentFile=/var/www/webhost/datea/.env
 ExecStart=/var/www/webhost/datea/venv/bin/gunicorn \
           --access-logfile - \
@@ -145,29 +145,6 @@ Add the following lines inside the `<VirtualHost *:443>` block, alongside your o
     ProxyPassReverse /datea/ http://127.0.0.1:8000/
 ```
 
-The final file should look something like this (some sections omitted for brevity):
-```apache
-<IfModule mod_ssl.c>
-<VirtualHost *:443>
-    ServerName zapp.sytes.net
-    DocumentRoot /var/www/webhost
-
-    # ... your other app configs ...
-
-    # --- Configuration for Datea App ---
-    Alias /datea/static/ /var/www/webhost/datea/staticfiles/
-    <Directory /var/www/webhost/datea/staticfiles>
-        Require all granted
-    </Directory>
-
-    ProxyPass /datea/ http://127.0.0.1:8000/
-    ProxyPassReverse /datea/ http://127.0.0.1:8000/
-
-    # ... rest of your config ...
-</VirtualHost>
-</IfModule>
-```
-
 ### 4.2. Test and Restart Apache2
 
 Test your Apache configuration for syntax errors and restart the service.
@@ -193,3 +170,16 @@ sudo systemctl restart gunicorn-datea
 ```
 
 Your application should now be accessible at `https://zapp.sytes.net/datea/`.
+
+## 6. Troubleshooting
+
+### Database Migration Errors
+
+If you encounter an error like `Table '...' doesn't exist` even after running `migrate`, it may be because Django's migration records are out of sync with your database. To fix this, you can run a "fake" migration to reset the records for the app.
+
+```bash
+# In your project directory, with the virtual environment active
+python3 inventory_management/manage.py migrate scanner zero --fake
+python3 inventory_management/manage.py migrate
+```
+This will reset the migration history for the `scanner` app and then correctly apply the migrations to create the tables.
