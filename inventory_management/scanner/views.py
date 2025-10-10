@@ -92,27 +92,12 @@ def subscribe(request):
         form = SubscriberForm()
     return render(request, 'scanner/subscribe.html', {'form': form})
 
-from django.db.models import Q
-
 def search(request):
-    """
-    Displays the search form and scanner interface.
-    """
     return render(request, 'scanner/search.html')
 
-def search_results(request):
-    """
-    Displays search results based on a query.
-    """
-    query = request.GET.get('q')
-    if query:
-        products = Product.objects.filter(
-            Q(item_number__icontains=query) | Q(name__icontains=query)
-        )
-    else:
-        # If no query, show all products
-        products = Product.objects.all()
-    return render(request, 'scanner/search_results.html', {'products': products, 'query': query})
+def search_results(request, upc):
+    products = Product.objects.filter(item_number=upc)
+    return render(request, 'scanner/search_results.html', {'products': products, 'upc': upc})
 
 def view_barcode(request, product_id):
     product = get_object_or_404(Product, pk=product_id)

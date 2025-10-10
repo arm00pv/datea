@@ -64,7 +64,7 @@ DATABASE_URL='mysql://YOUR_DB_USER:YOUR_DB_PASSWORD@64.225.55.254:3306/YOUR_DB_N
 Apply the database migrations to create the database schema in your MySQL database.
 
 ```bash
-python inventory_management/manage.py migrate
+python3 inventory_management/manage.py migrate
 ```
 
 ### 2.3. Collect Static Files
@@ -72,7 +72,7 @@ python inventory_management/manage.py migrate
 Collect all static files into a single directory for Apache to serve.
 
 ```bash
-python inventory_management/manage.py collectstatic
+python3 inventory_management/manage.py collectstatic
 ```
 
 ### 2.4. Create a Superuser
@@ -80,7 +80,7 @@ python inventory_management/manage.py collectstatic
 Create a superuser to access the Django admin interface.
 
 ```bash
-python inventory_management/manage.py createsuperuser
+python3 inventory_management/manage.py createsuperuser
 ```
 
 ## 3. Gunicorn Setup
@@ -141,8 +141,10 @@ Add the following lines inside the `<VirtualHost *:443>` block, alongside your o
         Require all granted
     </Directory>
 
-    ProxyPass /datea/ http://127.0.0.1:8000/
-    ProxyPassReverse /datea/ http://127.0.0.1:8000/
+    <Location /datea/>
+        ProxyPass http://127.0.0.1:8000/
+        ProxyPassReverse http://127.0.0.1:8000/
+    </Location>
 ```
 
 ### 4.2. Test and Restart Apache2
