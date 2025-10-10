@@ -24,7 +24,6 @@ class Batch(models.Model):
     @property
     def predicted_sales_until_expiration(self):
         if self.days_to_expiration > 0:
-            # Ensure weekly_average_sales is not zero to avoid division by zero
             if self.product.weekly_average_sales > 0:
                 return (self.product.weekly_average_sales / 7) * self.days_to_expiration
         return 0

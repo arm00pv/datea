@@ -14,12 +14,7 @@ def product_detail(request, product_id):
     # Use prefetch_related to efficiently fetch all batches for the product
     # and their related product in a single query.
     product = get_object_or_404(Product.objects.prefetch_related('batches'), pk=product_id)
-
-    # The logic is now in the model, so we can pass the batches directly.
-    return render(request, 'scanner/product_detail.html', {
-        'product': product,
-        'batches': product.batches.all(),
-    })
+    return render(request, 'scanner/product_detail.html', {'product': product})
 
 def add_product(request):
     if request.method == 'POST':
@@ -128,5 +123,4 @@ def expiration_prediction(request):
     # The logic is now in the model, so we can just fetch the batches.
     # We use select_related to avoid N+1 queries when accessing product details.
     batches = Batch.objects.select_related('product').all()
-
     return render(request, 'scanner/expiration_prediction.html', {'batches': batches})

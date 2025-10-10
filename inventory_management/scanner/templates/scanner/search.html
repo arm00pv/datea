@@ -1,21 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}Search{% endblock %}
+{% block title %}Search by UPC{% endblock %}
 
 {% block content %}
-    <h1>Search</h1>
+    <h1>Search by UPC</h1>
+    <p>Click the button to start scanning a UPC code.</p>
+    <button type="button" id="scan-upc-button" class="btn btn-primary">Start Scanner</button>
+    <button type="button" id="switch-camera-button" class="btn btn-info" style="display: none;">Switch Camera</button>
+    <button type="button" id="toggle-torch-button" class="btn btn-info" style="display: none;">Toggle Torch</button>
 
-    <form method="get" action="{% url 'search_results' %}">
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" name="q" placeholder="Search by item number or name">
-            <button class="btn btn-primary" type="submit">Search</button>
-        </div>
-    </form>
-
-    <hr>
-
-    <h3>Or Scan UPC</h3>
-    <button type="button" id="scan-upc-button" class="btn btn-secondary">Scan UPC</button>
     <div>
         <video id="video" width="300" height="200" style="border: 1px solid gray; display: none;"></video>
     </div>
@@ -26,57 +19,121 @@
         window.addEventListener('load', function () {
             const resultElement = document.getElementById('result');
             const videoElement = document.getElementById('video');
-
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-                resultElement.innerHTML = "<strong>Error:</strong> Camera access requires a secure connection (HTTPS).";
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                resultElement.innerHTML = "<strong>Error:</strong> Camera access is not supported by your browser.";
-                return;
-            }
-
-            const codeReader = new ZXingBrowser.BrowserMultiFormatReader();
             const scanButton = document.getElementById('scan-upc-button');
+            const switchCameraButton = document.getElementById('switch-camera-button');
+            const toggleTorchButton = document.getElementById('toggle-torch-button');
+
+            let codeReader;
+            let videoInputDevices;
             let selectedDeviceId;
+            let torchOn = false;
+            let currentStream;
 
-            codeReader.listVideoInputDevices()
-                .then((videoInputDevices) => {
-                    if (videoInputDevices.length > 0) {
-                        selectedDeviceId = videoInputDevices[0].deviceId;
-                    } else {
-                        resultElement.textContent = "No camera found on this device.";
-                    }
-                })
-                .catch((err) => {
-                    console.error(err);
-                    resultElement.textContent = "Could not list video devices.";
-                });
-
-            scanButton.addEventListener('click', () => {
-                if (!selectedDeviceId) {
-                    resultElement.textContent = "No video device found.";
-                    return;
+            function startScanner(deviceId) {
+                // Stop any existing stream
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+                if (codeReader) {
+                    codeReader.reset();
                 }
 
-                videoElement.style.display = 'block';
-                resultElement.textContent = "Starting scanner...";
+                const constraints = {
+                    video: {
+                        deviceId: { exact: deviceId },
+                        focusMode: 'continuous' // Enable autofocus
+                    }
+                };
 
-                codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
-                    if (result) {
-                        console.log(result);
-                        resultElement.textContent = `Found barcode: ${result.text}`;
-                        codeReader.reset();
-                        videoElement.style.display = 'none';
-                        // Redirect to the search results page with the scanned UPC
-                        window.location.href = `{% url 'search_results' %}?q=${result.text}`;
-                    }
-                    if (err && !(err instanceof ZXingBrowser.NotFoundException)) {
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(stream => {
+                        currentStream = stream;
+                        videoElement.srcObject = stream;
+                        videoElement.style.display = 'block';
+                        resultElement.textContent = "Scanner started...";
+
+                        const [videoTrack] = stream.getVideoTracks();
+                        const capabilities = videoTrack.getCapabilities();
+                        if (capabilities.torch) {
+                            toggleTorchButton.style.display = 'inline-block';
+                        }
+
+                        codeReader.decodeFromStream(videoElement, stream, (result, err) => {
+                            if (result) {
+                                console.log(result);
+                                resultElement.textContent = `Found barcode: ${result.text}`;
+                                codeReader.reset();
+                                videoElement.style.display = 'none';
+                                // Correctly redirect to the search results page with the scanned UPC as a query parameter
+                                window.location.href = `{% url 'search_results' %}?q=${result.text}`;
+                            }
+                            if (err && !(err instanceof ZXing.NotFoundException)) {
+                                console.error(err);
+                                resultElement.textContent = `Error: ${err}`;
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error("getUserMedia error:", err);
+                        resultElement.textContent = "Could not start camera.";
+                    });
+            }
+
+            // Initialize the code reader and list devices
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+                        if (videoInputDevices.length > 0) {
+                            // Prefer the back camera
+                            const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back'));
+                            selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+
+                            if (videoInputDevices.length > 1) {
+                                switchCameraButton.style.display = 'inline-block';
+                            }
+                        } else {
+                            resultElement.textContent = "No camera found on this device.";
+                        }
+                    })
+                    .catch(err => {
                         console.error(err);
-                        resultElement.textContent = `Error: ${err}`;
+                        resultElement.textContent = "Could not list video devices.";
+                    });
+
+            } else {
+                resultElement.innerHTML = "<strong>Error:</strong> Camera access is not supported by your browser.";
+            }
+
+            // Event Listeners
+            scanButton.addEventListener('click', () => {
+                if (selectedDeviceId) {
+                    startScanner(selectedDeviceId);
+                } else {
+                    resultElement.textContent = "No video device found.";
+                }
+            });
+
+            switchCameraButton.addEventListener('click', () => {
+                if (videoInputDevices.length > 1) {
+                    const currentIndex = videoInputDevices.findIndex(device => device.deviceId === selectedDeviceId);
+                    const nextIndex = (currentIndex + 1) % videoInputDevices.length;
+                    selectedDeviceId = videoInputDevices[nextIndex].deviceId;
+                    startScanner(selectedDeviceId); // Restart scanner with the new camera
+                }
+            });
+
+            toggleTorchButton.addEventListener('click', () => {
+                if (currentStream) {
+                    const [videoTrack] = currentStream.getVideoTracks();
+                    const capabilities = videoTrack.getCapabilities();
+                    if (capabilities.torch) {
+                        torchOn = !torchOn;
+                        videoTrack.applyConstraints({ advanced: [{ torch: torchOn }] });
                     }
-                });
+                }
             });
         });
     </script>

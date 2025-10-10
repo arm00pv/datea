@@ -31,7 +31,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for batch in batches %}
+            {% for batch in product.batches.all %}
             <tr class="{% if batch.is_at_risk %}table-danger{% endif %}">
                 <td>{{ batch.quantity }}</td>
                 <td>{{ batch.expiration_date }}</td>

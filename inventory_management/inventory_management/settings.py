@@ -18,8 +18,9 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+# Load environment variables from .env file in the repository root
+dotenv_path = BASE_DIR.parent / '.env'
+load_dotenv(dotenv_path=dotenv_path)
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,7 +32,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-mf9vlebvwixoiexc49(r=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['datea.onrender.com', 'localhost', '127.0.0.1', 'zapp.sytes.net']
+ALLOWED_HOSTS = ['zapp.sytes.net', 'datea.onrender.com', 'localhost', '127.0.0.1']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -48,7 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'scanner',
+    "scanner",
 ]
 
 MIDDLEWARE = [
@@ -144,9 +145,6 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 REMINDER_RECIPIENT_EMAIL = 'organization@example.com'
 
-# Subdirectory configuration
-FORCE_SCRIPT_NAME = '/datea'
-
 # Caching
 CACHES = {
     'default': {
@@ -154,3 +152,6 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
+
+# Subdirectory configuration
+FORCE_SCRIPT_NAME = '/datea'

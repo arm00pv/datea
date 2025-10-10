@@ -93,7 +93,7 @@ You need to create or update the systemd service file for Gunicorn to manage the
 sudo nano /etc/systemd/system/gunicorn-datea.service
 ```
 
-Paste the following content into the file. Make sure to replace `<your-user>` with your username.
+Paste the following content into the file. Make sure to replace `zixen` with your username if it is different.
 
 ```ini
 [Unit]
@@ -101,7 +101,7 @@ Description=gunicorn daemon for datea app
 After=network.target
 
 [Service]
-User=<your-user>
+User=zixen
 Group=www-data
 WorkingDirectory=/var/www/webhost/datea/inventory_management
 EnvironmentFile=/var/www/webhost/datea/.env
