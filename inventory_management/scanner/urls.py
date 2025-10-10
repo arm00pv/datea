@@ -16,4 +16,5 @@ urlpatterns = [
     path('search/<str:upc>/', views.search_results, name='search_results'),
     path('product/<int:product_id>/barcode/', views.view_barcode, name='view_barcode'),
     path('expiration-prediction/', views.expiration_prediction, name='expiration_prediction'),
+    path('report/', views.expiration_report, name='expiration_report'),
 ]
