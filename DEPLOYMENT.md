@@ -1,6 +1,6 @@
 # Gunicorn Service File Fix
 
-The `ModuleNotFoundError` is caused by an incorrect `WorkingDirectory` in your Gunicorn service file. Please update your `/etc/systemd/system/gunicorn-datea.service` file to match the following content.
+The `ModuleNotFoundError` is caused by an incorrect Python path for the Gunicorn service. Please update your `/etc/systemd/system/gunicorn-datea.service` file to match the following content. This version explicitly sets the `pythonpath` to ensure Gunicorn can find your application.
 
 ```bash
 sudo nano /etc/systemd/system/gunicorn-datea.service
@@ -15,9 +15,10 @@ After=network.target
 [Service]
 User=zixen
 Group=www-data
-WorkingDirectory=/var/www/webhost/datea
+WorkingDirectory=/var/www/webhost/datea/inventory_management
 EnvironmentFile=/var/www/webhost/datea/.env
 ExecStart=/var/www/webhost/datea/venv/bin/gunicorn \
+          --pythonpath /var/www/webhost/datea \
           --access-logfile - \
           --workers 3 \
           --bind 127.0.0.1:8000 \
