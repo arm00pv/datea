@@ -33,13 +33,3 @@ class SubscriberForm(forms.ModelForm):
         widgets = {
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
-
-class DateRangeForm(forms.Form):
-    start_date = forms.DateField(
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        required=True
-    )
-    end_date = forms.DateField(
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        required=True
-    )

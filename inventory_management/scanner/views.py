@@ -2,23 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from datetime import date, timedelta
 from django.views.decorators.cache import cache_page
 from .models import Product, Batch, Subscriber
-from .forms import ProductForm, BatchForm, SubscriberForm, DateRangeForm
-
-def expiration_report(request):
-    form = DateRangeForm(request.GET or None)
-    batches = None
-
-    if form.is_valid():
-        start_date = form.cleaned_data['start_date']
-        end_date = form.cleaned_data['end_date']
-        batches = Batch.objects.filter(
-            expiration_date__range=[start_date, end_date]
-        ).select_related('product').order_by('expiration_date')
-
-    return render(request, 'scanner/expiration_report.html', {
-        'form': form,
-        'batches': batches
-    })
+from .forms import ProductForm, BatchForm, SubscriberForm
 
 @cache_page(60 * 15)
 def product_list(request):
