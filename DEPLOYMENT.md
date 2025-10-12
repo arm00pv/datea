@@ -1,10 +1,8 @@
-# Final Gunicorn Service File Fix
+# Final Deployment Fix
 
-My deepest apologies for the repeated errors. The `ModuleNotFoundError` is definitively caused by the Gunicorn service not starting in the correct directory.
+My deepest apologies for the repeated errors. The root cause of the `ModuleNotFoundError` was a missing `__init__.py` file in the main `inventory_management` directory, which prevented Python from recognizing it as a package. That file has now been added.
 
-The following configuration is the final fix. It uses a shell command to `cd` into your project's root directory before starting Gunicorn. This is a robust method to ensure the Python path is set correctly, which will resolve the error.
-
-Please **replace the entire content** of your `/etc/systemd/system/gunicorn-datea.service` file with the following.
+Please **replace the entire content** of your `/etc/systemd/system/gunicorn-datea.service` file with the following, simplified and correct configuration.
 
 ```bash
 sudo nano /etc/systemd/system/gunicorn-datea.service
@@ -19,10 +17,13 @@ After=network.target
 [Service]
 User=zixen
 Group=www-data
+# The WorkingDirectory should be the root of the repository.
+WorkingDirectory=/var/www/webhost/datea
 EnvironmentFile=/var/www/webhost/datea/.env
-# We use a shell to change directory before executing Gunicorn.
-# This is a robust way to ensure the correct path is used.
-ExecStart=/bin/sh -c 'cd /var/www/webhost/datea && /var/www/webhost/datea/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 inventory_management.inventory_management.wsgi:application'
+ExecStart=/var/www/webhost/datea/venv/bin/gunicorn \
+          --workers 3 \
+          --bind 127.0.0.1:8000 \
+          inventory_management.inventory_management.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
