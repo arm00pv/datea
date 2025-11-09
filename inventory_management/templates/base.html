@@ -2,16 +2,38 @@
 <html>
 <head>
     <title>{% block title %}Inventory Management{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav>
-        <a href="{% url 'item_list' %}">Home</a> |
-        <a href="{% url 'expiring_soon' %}">Expiring Soon</a> |
-        <a href="{% url 'subscribe' %}">Subscribe</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">Inventory</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'item_list' %}">Items</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'expiring_soon' %}">Expiring Soon</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'subscribe' %}">Subscribe</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </nav>
-    <hr>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    <div class="container mt-4">
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

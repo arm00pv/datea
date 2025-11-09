@@ -2,11 +2,44 @@ from django.shortcuts import render, redirect
 from datetime import date, timedelta
 from .models import Item
 from .forms import ItemForm, SubscriberForm
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 
+def dashboard(request):
+    total_items = Item.objects.count()
+    expiring_soon_count = Item.objects.filter(expiration_date__lte=date.today() + timedelta(days=7)).count()
+    low_stock_count = Item.objects.filter(quantity__lte=5).count()
+
+    context = {
+        'total_items': total_items,
+        'expiring_soon_count': expiring_soon_count,
+        'low_stock_count': low_stock_count,
+    }
+    return render(request, 'scanner/dashboard.html', context)
 
 def item_list(request):
     items = Item.objects.all()
-    return render(request, 'scanner/item_list.html', {'items': items})
+    query = request.GET.get('query')
+    sort_by = request.GET.get('sort_by', 'name')
+    direction = request.GET.get('direction', 'asc')
+
+    if query:
+        items = items.filter(name__icontains=query)
+
+    if direction == 'desc':
+        sort_by = f'-{sort_by}'
+    items = items.order_by(sort_by)
+
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'scanner/item_list.html', {
+        'page_obj': page_obj,
+        'query': query,
+        'sort_by': sort_by,
+        'direction': direction
+    })
 
 
 def add_item(request):

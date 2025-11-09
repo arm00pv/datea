@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expiring Items Notification</title>
+</head>
+<body>
+    <h1>Items Expiring Soon</h1>
+    <p>The following items are expiring within the next 7 days:</p>
+    <ul>
+        {% for item in items %}
+            <li>{{ item.name }} (Expires on: {{ item.expiration_date|date:"Y-m-d" }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
