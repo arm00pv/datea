@@ -22,14 +22,58 @@
             {{ form.expiration_date.label_tag }}
             <input type="date" name="expiration_date" id="id_expiration_date" class="form-control" required>
         </div>
-        <button type="button" id="scan-upc-button" class="btn btn-secondary">Scan UPC</button>
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#scannerModal">
+            Scan UPC
+        </button>
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
-    <script>
-        document.getElementById('scan-upc-button').addEventListener('click', function() {
-            var upc = prompt("Enter UPC code");
-            if (upc) {
-                document.getElementById('id_item_number').value = upc;
+
+    <!-- Scanner Modal -->
+    <div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scannerModalLabel">Scan UPC Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeScanner"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reader" width="100%"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function onScanSuccess(decodedText, decodedResult) {
+            // handle the scanned code as you like, for example:
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+            document.getElementById('id_item_number').value = decodedText;
+            var modal = bootstrap.Modal.getInstance(document.getElementById('scannerModal'));
+            modal.hide();
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning.
+            // for example:
+            console.warn(`Code scan error = ${error}`);
+        }
+
+        let html5QrcodeScanner;
+
+        document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: {width: 250, height: 150}, facingMode: { exact: "environment"} },
+                /* verbose= */ false);
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        });
+
+        document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
             }
         });
     </script>
