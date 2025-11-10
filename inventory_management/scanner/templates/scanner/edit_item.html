@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Item{% endblock %}
+
+{% block content %}
+    <h1>Edit Item</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.item_number.label_tag }}
+            <input type="text" name="item_number" id="id_item_number" class="form-control" value="{{ form.instance.item_number }}" required>
+        </div>
+        <div class="mb-3">
+            {{ form.name.label_tag }}
+            <input type="text" name="name" id="id_name" class="form-control" value="{{ form.instance.name }}" required>
+        </div>
+        <div class="mb-3">
+            {{ form.quantity.label_tag }}
+            <input type="number" name="quantity" id="id_quantity" class="form-control" value="{{ form.instance.quantity }}" required>
+        </div>
+        <div class="mb-3">
+            {{ form.expiration_date.label_tag }}
+            <input type="date" name="expiration_date" id="id_expiration_date" class="form-control" value="{{ form.instance.expiration_date|date:'Y-m-d' }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'item_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+{% endblock %}

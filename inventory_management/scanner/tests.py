@@ -72,11 +72,11 @@ class ViewTest(TestCase):
         self.assertEqual(Item.objects.count(), 3)
 
     def test_expiring_soon_view(self):
-        response = self.client.get(reverse('expiring_soon'))
+        response = self.client.get(reverse('expiring_soon_list'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Test Item")
         self.assertContains(response, "Expiring Item")
-        self.assertTemplateUsed(response, 'scanner/expiring_soon.html')
+        self.assertTemplateUsed(response, 'scanner/item_list.html')
 
     def test_subscribe_view_get(self):
         response = self.client.get(reverse('subscribe'))

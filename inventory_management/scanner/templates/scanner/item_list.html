@@ -23,6 +23,7 @@
                 <th><a href="?sort_by=quantity&direction={% if request.GET.sort_by == 'quantity' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Quantity</a></th>
                 <th><a href="?sort_by=entry_date&direction={% if request.GET.sort_by == 'entry_date' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Entry Date</a></th>
                 <th><a href="?sort_by=expiration_date&direction={% if request.GET.sort_by == 'expiration_date' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Expiration Date</a></th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -33,10 +34,14 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.entry_date|date:"Y-m-d" }}</td>
                 <td>{{ item.expiration_date|date:"Y-m-d" }}</td>
+                <td>
+                    <a href="{% url 'edit_item' item.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'delete_item' item.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">No items found.</td>
+                <td colspan="6" class="text-center">No items found.</td>
             </tr>
             {% endfor %}
         </tbody>

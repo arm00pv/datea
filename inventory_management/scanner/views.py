@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from datetime import date, timedelta
 from .models import Item
 from .forms import ItemForm, SubscriberForm
@@ -56,10 +56,37 @@ def add_item(request):
         form = ItemForm()
     return render(request, 'scanner/add_item.html', {'form': form})
 
-def expiring_soon(request):
-    seven_days_from_now = date.today() + timedelta(days=7)
-    expiring_items = Item.objects.filter(expiration_date__lte=seven_days_from_now)
-    return render(request, 'scanner/expiring_soon.html', {'items': expiring_items})
+def edit_item(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    if request.method == 'POST':
+        form = ItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect('item_list')
+    else:
+        form = ItemForm(instance=item)
+    return render(request, 'scanner/edit_item.html', {'form': form})
+
+def delete_item(request, pk):
+    item = get_object_or_404(Item, pk=pk)
+    if request.method == 'POST':
+        item.delete()
+        return redirect('item_list')
+    return render(request, 'scanner/delete_item_confirm.html', {'item': item})
+
+def expiring_soon_list(request):
+    items = Item.objects.filter(expiration_date__lte=date.today() + timedelta(days=7))
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'scanner/item_list.html', {'page_obj': page_obj})
+
+def low_stock_list(request):
+    items = Item.objects.filter(quantity__lte=5)
+    paginator = Paginator(items, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'scanner/item_list.html', {'page_obj': page_obj})
 
 def subscribe(request):
     if request.method == 'POST':
