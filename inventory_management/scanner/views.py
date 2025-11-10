@@ -4,16 +4,20 @@ from .models import Item
 from .forms import ItemForm, SubscriberForm
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.views.decorators.cache import cache_page
 
+@cache_page(60 * 15)
 def dashboard(request):
-    total_items = Item.objects.count()
-    expiring_soon_count = Item.objects.filter(expiration_date__lte=date.today() + timedelta(days=7)).count()
-    low_stock_count = Item.objects.filter(quantity__lte=5).count()
+    stats = Item.objects.aggregate(
+        total_items=Count('id'),
+        expiring_soon_count=Count('id', filter=Q(expiration_date__lte=date.today() + timedelta(days=7))),
+        low_stock_count=Count('id', filter=Q(quantity__lte=5))
+    )
 
     context = {
-        'total_items': total_items,
-        'expiring_soon_count': expiring_soon_count,
-        'low_stock_count': low_stock_count,
+        'total_items': stats['total_items'],
+        'expiring_soon_count': stats['expiring_soon_count'],
+        'low_stock_count': stats['low_stock_count'],
     }
     return render(request, 'scanner/dashboard.html', context)
 
