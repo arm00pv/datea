@@ -1,14 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import date, timedelta
 from .models import Item
-from .forms import ItemForm, SubscriberForm
+from .forms import ItemForm, SubscriberForm, CustomUserCreationForm
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.views.decorators.cache import cache_page
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
+import csv
+from django.http import HttpResponse
 
+def register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'register.html', {'form': form})
+
+@login_required
 @cache_page(60 * 15)
 def dashboard(request):
-    stats = Item.objects.aggregate(
+    stats = Item.objects.filter(user=request.user).aggregate(
         total_items=Count('id'),
         expiring_soon_count=Count('id', filter=Q(expiration_date__lte=date.today() + timedelta(days=7))),
         low_stock_count=Count('id', filter=Q(quantity__lte=5))
@@ -21,8 +37,9 @@ def dashboard(request):
     }
     return render(request, 'scanner/dashboard.html', context)
 
+@login_required
 def item_list(request):
-    items = Item.objects.all()
+    items = Item.objects.filter(user=request.user)
     query = request.GET.get('query')
     sort_by = request.GET.get('sort_by', 'name')
     direction = request.GET.get('direction', 'asc')
@@ -45,19 +62,22 @@ def item_list(request):
         'direction': direction
     })
 
-
+@login_required
 def add_item(request):
     if request.method == 'POST':
         form = ItemForm(request.POST)
         if form.is_valid():
-            form.save()
+            item = form.save(commit=False)
+            item.user = request.user
+            item.save()
             return redirect('item_list')
     else:
         form = ItemForm()
     return render(request, 'scanner/add_item.html', {'form': form})
 
+@login_required
 def edit_item(request, pk):
-    item = get_object_or_404(Item, pk=pk)
+    item = get_object_or_404(Item, pk=pk, user=request.user)
     if request.method == 'POST':
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
@@ -67,22 +87,25 @@ def edit_item(request, pk):
         form = ItemForm(instance=item)
     return render(request, 'scanner/edit_item.html', {'form': form})
 
+@login_required
 def delete_item(request, pk):
-    item = get_object_or_404(Item, pk=pk)
+    item = get_object_or_404(Item, pk=pk, user=request.user)
     if request.method == 'POST':
         item.delete()
         return redirect('item_list')
     return render(request, 'scanner/delete_item_confirm.html', {'item': item})
 
+@login_required
 def expiring_soon_list(request):
-    items = Item.objects.filter(expiration_date__lte=date.today() + timedelta(days=7))
+    items = Item.objects.filter(user=request.user, expiration_date__lte=date.today() + timedelta(days=7))
     paginator = Paginator(items, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'scanner/item_list.html', {'page_obj': page_obj})
 
+@login_required
 def low_stock_list(request):
-    items = Item.objects.filter(quantity__lte=5)
+    items = Item.objects.filter(user=request.user, quantity__lte=5)
     paginator = Paginator(items, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -98,9 +121,24 @@ def subscribe(request):
         form = SubscriberForm()
     return render(request, 'scanner/subscribe.html', {'form': form})
 
+@login_required
 def setup_test_data(request):
-    Item.objects.all().delete() # Clear existing data
-    Item.objects.create(item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3))
-    Item.objects.create(item_number='2', name='Eggs', quantity=12, expiration_date=date.today() + timedelta(days=10))
-    Item.objects.create(item_number='3', name='Bread', quantity=1, expiration_date=date.today() + timedelta(days=1))
+    Item.objects.filter(user=request.user).delete() # Clear existing data
+    Item.objects.create(user=request.user, item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3))
+    Item.objects.create(user=request.user, item_number='2', name='Eggs', quantity=12, expiration_date=date.today() + timedelta(days=10))
+    Item.objects.create(user=request.user, item_number='3', name='Bread', quantity=1, expiration_date=date.today() + timedelta(days=1))
     return redirect('item_list')
+
+@login_required
+def export_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="inventory.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Item Number', 'Name', 'Quantity', 'Entry Date', 'Expiration Date'])
+
+    items = Item.objects.filter(user=request.user).values_list('item_number', 'name', 'quantity', 'entry_date', 'expiration_date')
+    for item in items:
+        writer.writerow(item)
+
+    return response

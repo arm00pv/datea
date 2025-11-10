@@ -3,12 +3,15 @@ from django.urls import reverse
 from django.core import mail
 from django.core.management import call_command
 from .models import Item, Subscriber
+from django.contrib.auth.models import User
 import datetime
 from io import StringIO
 
 class ItemModelTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password')
         self.item = Item.objects.create(
+            user=self.user,
             item_number="123456789012",
             name="Test Item",
             quantity=10,
@@ -35,13 +38,17 @@ class SubscriberModelTest(TestCase):
 
 class ViewTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.client.login(username='testuser', password='password')
         self.item = Item.objects.create(
+            user=self.user,
             item_number="123456789012",
             name="Test Item",
             quantity=10,
             expiration_date=datetime.date.today() + datetime.timedelta(days=30)
         )
         self.expiring_item = Item.objects.create(
+            user=self.user,
             item_number="expiring",
             name="Expiring Item",
             quantity=1,
@@ -89,10 +96,21 @@ class ViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Subscriber.objects.count(), 1)
 
+    def test_export_csv_view(self):
+        response = self.client.get(reverse('export_csv'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename="inventory.csv"')
+        content = response.content.decode('utf-8')
+        self.assertIn('Test Item', content)
+        self.assertIn('Expiring Item', content)
+
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class ReminderCommandTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password')
         self.expiring_item = Item.objects.create(
+            user=self.user,
             item_number="expiring",
             name="Expiring Item",
             quantity=1,
