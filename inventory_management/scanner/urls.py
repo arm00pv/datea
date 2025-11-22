@@ -18,4 +18,5 @@ urlpatterns = [
     path('categories/delete/<int:pk>/', views.delete_category, name='delete_category'),
     path('lookup-upc/', views.lookup_upc, name='lookup_upc'),
     path('bulk-scan/', views.bulk_scan, name='bulk_scan'),
+    path('chart-data/', views.chart_data, name='chart_data'),
 ]

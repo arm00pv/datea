@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from .models import Item, Category
 from .forms import ItemForm, SubscriberForm, CustomUserCreationForm, CategoryForm
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
@@ -131,10 +131,15 @@ def subscribe(request):
 
 @login_required
 def setup_test_data(request):
-    Item.objects.filter(user=request.user).delete() # Clear existing data
-    Item.objects.create(user=request.user, item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3))
-    Item.objects.create(user=request.user, item_number='2', name='Eggs', quantity=12, expiration_date=date.today() + timedelta(days=10))
-    Item.objects.create(user=request.user, item_number='3', name='Bread', quantity=1, expiration_date=date.today() + timedelta(days=1))
+    Item.objects.filter(user=request.user).delete()
+    Category.objects.filter(user=request.user).delete()
+
+    dairy = Category.objects.create(user=request.user, name='Dairy')
+    bakery = Category.objects.create(user=request.user, name='Bakery')
+
+    Item.objects.create(user=request.user, item_number='1', name='Milk', quantity=1, expiration_date=date.today() + timedelta(days=3), category=dairy)
+    Item.objects.create(user=request.user, item_number='2', name='Eggs', quantity=12, expiration_date=date.today() + timedelta(days=10), category=dairy)
+    Item.objects.create(user=request.user, item_number='3', name='Bread', quantity=1, expiration_date=date.today() + timedelta(days=1), category=bakery)
     return redirect('item_list')
 
 @login_required
@@ -225,3 +230,23 @@ def bulk_scan(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return render(request, 'scanner/bulk_scan.html')
+
+@login_required
+def chart_data(request):
+    category_data = Item.objects.filter(user=request.user).values('category__name').annotate(count=Count('id'))
+    stock_data = Item.objects.filter(user=request.user).values('name').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')[:5]
+
+    category_chart = {
+        'labels': [data['category__name'] if data['category__name'] else "Uncategorized" for data in category_data],
+        'data': [data['count'] for data in category_data],
+    }
+
+    stock_chart = {
+        'labels': [data['name'] for data in stock_data],
+        'data': [data['total_quantity'] for data in stock_data],
+    }
+
+    return JsonResponse({
+        'category_chart': category_chart,
+        'stock_chart': stock_chart,
+    })
