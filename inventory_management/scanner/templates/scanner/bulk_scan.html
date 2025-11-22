@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Scan{% endblock %}
+
+{% block content %}
+    <h1>Bulk Scan Items</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <div id="reader" width="100%"></div>
+        </div>
+        <div class="col-md-6">
+            <h3>Scanned Items</h3>
+            <ul id="scanned-items" class="list-group">
+            </ul>
+            <button id="save-items" class="btn btn-primary mt-3">Save All Items</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let scannedItems = [];
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+
+            fetch(`/lookup-upc/?upc=${decodedText}`)
+                .then(response => response.json())
+                .then(data => {
+                    let itemName = data.title || 'Unknown Item';
+                    scannedItems.push({ item_number: decodedText, name: itemName });
+                    updateScannedItemsList();
+                })
+                .catch(error => {
+                    console.error('Error fetching item name:', error);
+                    scannedItems.push({ item_number: decodedText, name: 'Unknown Item' });
+                    updateScannedItemsList();
+                });
+        }
+
+        function updateScannedItemsList() {
+            const list = document.getElementById('scanned-items');
+            list.innerHTML = '';
+            scannedItems.forEach((item, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.textContent = `${item.name} (UPC: ${item.item_number})`;
+                list.appendChild(listItem);
+            });
+        }
+
+        function onScanFailure(error) {
+            console.warn(`Code scan error = ${error}`);
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: {width: 250, height: 150}, facingMode: { exact: "environment"} },
+            false
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+        document.getElementById('save-items').addEventListener('click', function() {
+            fetch('{% url "bulk_scan" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({items: scannedItems})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '{% url "item_list" %}';
+                } else {
+                    alert('Error saving items: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+{% endblock %}

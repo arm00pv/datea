@@ -33,9 +33,19 @@
 
     <script type="text/javascript">
         function onScanSuccess(decodedText, decodedResult) {
-            // handle the scanned code as you like, for example:
             console.log(`Code matched = ${decodedText}`, decodedResult);
             document.getElementById('id_item_number').value = decodedText;
+
+            // Fetch item name from backend
+            fetch(`/lookup-upc/?upc=${decodedText}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.title) {
+                        document.getElementById('id_name').value = data.title;
+                    }
+                })
+                .catch(error => console.error('Error fetching item name:', error));
+
             var modal = bootstrap.Modal.getInstance(document.getElementById('scannerModal'));
             modal.hide();
         }

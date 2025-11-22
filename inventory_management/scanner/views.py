@@ -8,7 +8,9 @@ from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 import csv
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+import requests
+import json
 
 def register(request):
     if request.method == 'POST':
@@ -186,3 +188,40 @@ def delete_category(request, pk):
         category.delete()
         return redirect('category_list')
     return render(request, 'scanner/delete_category_confirm.html', {'category': category})
+
+@login_required
+def lookup_upc(request):
+    upc = request.GET.get('upc')
+    if not upc:
+        return JsonResponse({'error': 'UPC not provided'}, status=400)
+
+    try:
+        response = requests.get(f'https://api.upcitemdb.com/prod/trial/lookup?upc={upc}')
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get('items'):
+            return JsonResponse({'title': data['items'][0].get('title', '')})
+        else:
+            return JsonResponse({'title': ''})
+
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def bulk_scan(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            items = data.get('items', [])
+            for item_data in items:
+                Item.objects.create(
+                    user=request.user,
+                    item_number=item_data['item_number'],
+                    name=item_data['name'],
+                    quantity=1 # Default quantity
+                )
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return render(request, 'scanner/bulk_scan.html')
