@@ -12,4 +12,8 @@ urlpatterns = [
     path('subscribe/', views.subscribe, name='subscribe'),
     path('setup-test-data/', views.setup_test_data, name='setup_test_data'),
     path('export-csv/', views.export_csv, name='export_csv'),
+    path('categories/', views.category_list, name='category_list'),
+    path('categories/add/', views.add_category, name='add_category'),
+    path('categories/edit/<int:pk>/', views.edit_category, name='edit_category'),
+    path('categories/delete/<int:pk>/', views.delete_category, name='delete_category'),
 ]

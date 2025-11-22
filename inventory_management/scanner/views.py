@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import date, timedelta
-from .models import Item
-from .forms import ItemForm, SubscriberForm, CustomUserCreationForm
+from .models import Item, Category
+from .forms import ItemForm, SubscriberForm, CustomUserCreationForm, CategoryForm
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.views.decorators.cache import cache_page
@@ -40,12 +40,17 @@ def dashboard(request):
 @login_required
 def item_list(request):
     items = Item.objects.filter(user=request.user)
+    categories = Category.objects.filter(user=request.user)
     query = request.GET.get('query')
+    category_id = request.GET.get('category')
     sort_by = request.GET.get('sort_by', 'name')
     direction = request.GET.get('direction', 'asc')
 
     if query:
         items = items.filter(name__icontains=query)
+
+    if category_id:
+        items = items.filter(category__id=category_id)
 
     if direction == 'desc':
         sort_by = f'-{sort_by}'
@@ -57,6 +62,7 @@ def item_list(request):
 
     return render(request, 'scanner/item_list.html', {
         'page_obj': page_obj,
+        'categories': categories,
         'query': query,
         'sort_by': sort_by,
         'direction': direction
@@ -65,26 +71,26 @@ def item_list(request):
 @login_required
 def add_item(request):
     if request.method == 'POST':
-        form = ItemForm(request.POST)
+        form = ItemForm(request.POST, user=request.user)
         if form.is_valid():
             item = form.save(commit=False)
             item.user = request.user
             item.save()
             return redirect('item_list')
     else:
-        form = ItemForm()
+        form = ItemForm(user=request.user)
     return render(request, 'scanner/add_item.html', {'form': form})
 
 @login_required
 def edit_item(request, pk):
     item = get_object_or_404(Item, pk=pk, user=request.user)
     if request.method == 'POST':
-        form = ItemForm(request.POST, instance=item)
+        form = ItemForm(request.POST, instance=item, user=request.user)
         if form.is_valid():
             form.save()
             return redirect('item_list')
     else:
-        form = ItemForm(instance=item)
+        form = ItemForm(instance=item, user=request.user)
     return render(request, 'scanner/edit_item.html', {'form': form})
 
 @login_required
@@ -142,3 +148,41 @@ def export_csv(request):
         writer.writerow(item)
 
     return response
+
+@login_required
+def category_list(request):
+    categories = Category.objects.filter(user=request.user)
+    return render(request, 'scanner/category_list.html', {'categories': categories})
+
+@login_required
+def add_category(request):
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.user = request.user
+            category.save()
+            return redirect('category_list')
+    else:
+        form = CategoryForm()
+    return render(request, 'scanner/add_category.html', {'form': form})
+
+@login_required
+def edit_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return redirect('category_list')
+    else:
+        form = CategoryForm(instance=category)
+    return render(request, 'scanner/edit_category.html', {'form': form})
+
+@login_required
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    if request.method == 'POST':
+        category.delete()
+        return redirect('category_list')
+    return render(request, 'scanner/delete_category_confirm.html', {'category': category})

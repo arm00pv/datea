@@ -6,22 +6,7 @@
     <h1>Add New Item</h1>
     <form method="post">
         {% csrf_token %}
-        <div class="mb-3">
-            {{ form.item_number.label_tag }}
-            <input type="text" name="item_number" id="id_item_number" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            {{ form.name.label_tag }}
-            <input type="text" name="name" id="id_name" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            {{ form.quantity.label_tag }}
-            <input type="number" name="quantity" id="id_quantity" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            {{ form.expiration_date.label_tag }}
-            <input type="date" name="expiration_date" id="id_expiration_date" class="form-control" required>
-        </div>
+        {{ form.as_p }}
         <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#scannerModal">
             Scan UPC
         </button>

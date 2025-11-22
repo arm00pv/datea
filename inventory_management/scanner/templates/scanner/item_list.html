@@ -14,7 +14,13 @@
     <form method="get" class="mb-3">
         <div class="input-group">
             <input type="text" name="query" class="form-control" placeholder="Search by name..." value="{{ request.GET.query }}">
-            <button class="btn btn-outline-secondary" type="submit">Search</button>
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.pk }}" {% if request.GET.category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
         </div>
     </form>
 
@@ -23,6 +29,7 @@
             <tr>
                 <th><a href="?sort_by=item_number&direction={% if request.GET.sort_by == 'item_number' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Item Number</a></th>
                 <th><a href="?sort_by=name&direction={% if request.GET.sort_by == 'name' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Name</a></th>
+                <th><a href="?sort_by=category&direction={% if request.GET.sort_by == 'category' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Category</a></th>
                 <th><a href="?sort_by=quantity&direction={% if request.GET.sort_by == 'quantity' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Quantity</a></th>
                 <th><a href="?sort_by=entry_date&direction={% if request.GET.sort_by == 'entry_date' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Entry Date</a></th>
                 <th><a href="?sort_by=expiration_date&direction={% if request.GET.sort_by == 'expiration_date' and request.GET.direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-white">Expiration Date</a></th>
@@ -34,6 +41,7 @@
             <tr>
                 <td>{{ item.item_number }}</td>
                 <td>{{ item.name }}</td>
+                <td>{{ item.category.name|default:"-" }}</td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.entry_date|date:"Y-m-d" }}</td>
                 <td>{{ item.expiration_date|date:"Y-m-d" }}</td>
@@ -44,7 +52,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No items found.</td>
+                <td colspan="7" class="text-center">No items found.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -184,3 +184,25 @@ Finally, run the initial database migrations to set up the necessary tables.
 ```bash
 sudo /path/to/your/project/venv/bin/python manage.py migrate
 ```
+
+## 6. Production Considerations
+
+### a. Caching
+
+The `LocMemCache` is suitable for development but not for production, as each Gunicorn worker will have its own separate cache. For a production environment, you should use a shared cache backend like Redis or Memcached.
+
+### b. Scheduled Tasks (Cron Job)
+
+To automatically send expiry notifications, you need to set up a cron job to run the `send_expiry_notifications` management command periodically.
+
+Open the crontab for editing:
+
+```bash
+crontab -e
+```
+
+Add the following line to run the command every day at midnight:
+
+```
+0 0 * * * /path/to/your/project/venv/bin/python /path/to/your/project/inventory_management/manage.py send_expiry_notifications
+```
