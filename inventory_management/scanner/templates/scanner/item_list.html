@@ -74,3 +74,16 @@
         </ul>
     </nav>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toaster = new ToasterUi();
+        {% if messages %}
+            {% for message in messages %}
+                toaster.addToast("{{ message }}", "{{ message.tags }}");
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}

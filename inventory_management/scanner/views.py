@@ -7,6 +7,7 @@ from django.db.models import Count, Q, Sum
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.contrib import messages
 import csv
 from django.http import HttpResponse, JsonResponse
 import requests
@@ -78,6 +79,7 @@ def add_item(request):
             item = form.save(commit=False)
             item.user = request.user
             item.save()
+            messages.success(request, 'Item added successfully.')
             return redirect('item_list')
     else:
         form = ItemForm(user=request.user)
@@ -90,6 +92,7 @@ def edit_item(request, pk):
         form = ItemForm(request.POST, instance=item, user=request.user)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Item updated successfully.')
             return redirect('item_list')
     else:
         form = ItemForm(instance=item, user=request.user)
@@ -100,6 +103,7 @@ def delete_item(request, pk):
     item = get_object_or_404(Item, pk=pk, user=request.user)
     if request.method == 'POST':
         item.delete()
+        messages.success(request, 'Item deleted successfully.')
         return redirect('item_list')
     return render(request, 'scanner/delete_item_confirm.html', {'item': item})
 
@@ -169,6 +173,7 @@ def add_category(request):
             category = form.save(commit=False)
             category.user = request.user
             category.save()
+            messages.success(request, 'Category added successfully.')
             return redirect('category_list')
     else:
         form = CategoryForm()
@@ -181,6 +186,7 @@ def edit_category(request, pk):
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Category updated successfully.')
             return redirect('category_list')
     else:
         form = CategoryForm(instance=category)
@@ -191,6 +197,7 @@ def delete_category(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
     if request.method == 'POST':
         category.delete()
+        messages.success(request, 'Category deleted successfully.')
         return redirect('category_list')
     return render(request, 'scanner/delete_category_confirm.html', {'category': category})
 
